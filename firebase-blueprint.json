@@ -1,0 +1,226 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile in Qyronix with role-based permissions",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique identifier of the authenticated user"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the user"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "Candidate",
+            "Recruiter",
+            "Admin"
+          ],
+          "description": "Assigned access control role"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp indicating document creation"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "email",
+        "role",
+        "createdAt"
+      ]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Resume AI Scanner diagnostic report and dynamic evaluation metrics",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this scan log"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the candidate owner"
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Uploaded credential original filename"
+        },
+        "fileType": {
+          "type": "string",
+          "description": "Mime or trailing ext type (pdf/docx)"
+        },
+        "uploadedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Moment of dispatch creation"
+        },
+        "atsScore": {
+          "type": "integer",
+          "description": "Applicant tracking system compatibility rating"
+        },
+        "resumeScore": {
+          "type": "integer",
+          "description": "Formatting, layout and impact diagnostic rating"
+        },
+        "communicationScore": {
+          "type": "integer",
+          "description": "Vocabulary and narrative strength rating"
+        },
+        "confidenceScore": {
+          "type": "integer",
+          "description": "Self-presentation authority index"
+        },
+        "placementReadiness": {
+          "type": "integer",
+          "description": "Technical fit for elite placements rating"
+        },
+        "careerProgress": {
+          "type": "integer",
+          "description": "Aesthetic progression rate score"
+        },
+        "extractedSkills": {
+          "type": "array",
+          "description": "Extracted key expertise elements"
+        },
+        "missingKeywords": {
+          "type": "array",
+          "description": "Strategic search terms absent from credentials"
+        },
+        "feedback": {
+          "type": "string",
+          "description": "Markdown breakdown of core qualitative feedback"
+        },
+        "strengths": {
+          "type": "array",
+          "description": "High-impact highlighted vectors"
+        },
+        "weaknesses": {
+          "type": "array",
+          "description": "Recommended correctional actions"
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "Fully mock/real cloud bucket path"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "fileName",
+        "fileType",
+        "uploadedAt",
+        "atsScore",
+        "resumeScore",
+        "communicationScore",
+        "confidenceScore",
+        "placementReadiness",
+        "careerProgress"
+      ]
+    },
+    "InterviewSession": {
+      "title": "InterviewSession",
+      "description": "Quantum AI Interview session evaluation report and roadmap",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "questions": { "type": "array" },
+        "answers": { "type": "array" },
+        "interviewerRole": { "type": "string" },
+        "overallPerformanceScore": { "type": "integer" },
+        "communicationScore": { "type": "integer" },
+        "confidenceScore": { "type": "integer" },
+        "grammarCorrection": { "type": "string" },
+        "vocabularySuggestions": { "type": "array" },
+        "pronunciationImprovement": { "type": "string" },
+        "strengths": { "type": "array" },
+        "weaknesses": { "type": "array" },
+        "improvementRoadmap": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "type",
+        "interviewerRole",
+        "overallPerformanceScore",
+        "communicationScore",
+        "confidenceScore",
+        "createdAt"
+      ]
+    },
+    "HumanIntelReport": {
+      "title": "HumanIntelReport",
+      "description": "Human Intelligence Analysis Report containing Body Language, Dress Intelligence, Placement Readiness, and Career Growth Roadmaps.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "role": { "type": "string" },
+        "eyeContact": { "type": "string" },
+        "facialExpressions": { "type": "string" },
+        "headMovement": { "type": "string" },
+        "sittingPosture": { "type": "string" },
+        "handGestures": { "type": "string" },
+        "confidenceScore": { "type": "integer" },
+        "bodyLanguageScore": { "type": "integer" },
+        "professionalPresenceScore": { "type": "integer" },
+        "shirtRecommendation": { "type": "string" },
+        "blazerRecommendation": { "type": "string" },
+        "appearanceGuidelines": { "type": "string" },
+        "stylingSuggestions": { "type": "string" },
+        "scoreTechnical": { "type": "integer" },
+        "scoreCommunication": { "type": "integer" },
+        "scoreConfidence": { "type": "integer" },
+        "scoreResume": { "type": "integer" },
+        "scoreBodyLanguage": { "type": "integer" },
+        "overallPlacementScore": { "type": "integer" },
+        "plan30Day": { "type": "string" },
+        "plan60Day": { "type": "string" },
+        "plan90Day": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "role",
+        "confidenceScore",
+        "bodyLanguageScore",
+        "professionalPresenceScore",
+        "overallPlacementScore",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Collection of users registered in the system"
+    },
+    "reports/{reportId}": {
+      "schema": "Report",
+      "description": "Collection of resume scanner diagnostic reports"
+    },
+    "interview_reports/{reportId}": {
+      "schema": "InterviewSession",
+      "description": "Collection of candidate comprehensive mock interview logs and scoring diagnostics"
+    },
+    "human_intel_reports/{reportId}": {
+      "schema": "HumanIntelReport",
+      "description": "Collection of human intelligence visual/behavioral presentation coaching audits"
+    }
+  }
+}

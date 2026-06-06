@@ -1,0 +1,6 @@
+{
+  "name": "Qyronix",
+  "description": "Futuristic Aurora AI recruitment and talent acquisition platform with multi-role secure authentication.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

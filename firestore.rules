@@ -1,0 +1,214 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 3. User Entity Validation Blueprint
+    function isValidUser(data) {
+      return data.uid is string && data.uid == request.auth.uid
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 100
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 150
+        && data.role is string && (data.role == 'Candidate' || data.role == 'Recruiter' || data.role == 'Admin')
+        && data.createdAt is timestamp;
+    }
+
+    // 4. Report Entity Validation Blueprint
+    function isValidReport(data) {
+      return data.id is string && data.id.size() >= 2 && data.id.size() <= 128
+        && data.userId is string && data.userId == request.auth.uid
+        && data.fileName is string && data.fileName.size() >= 2 && data.fileName.size() <= 200
+        && data.fileType is string && data.fileType.size() >= 2 && data.fileType.size() <= 400
+        && data.uploadedAt is timestamp
+        && data.atsScore is int && data.atsScore >= 0 && data.atsScore <= 100
+        && data.resumeScore is int && data.resumeScore >= 0 && data.resumeScore <= 100
+        && data.communicationScore is int && data.communicationScore >= 0 && data.communicationScore <= 100
+        && data.confidenceScore is int && data.confidenceScore >= 0 && data.confidenceScore <= 100
+        && data.placementReadiness is int && data.placementReadiness >= 0 && data.placementReadiness <= 100
+        && data.careerProgress is int && data.careerProgress >= 0 && data.careerProgress <= 100;
+    }
+
+    // 5. Interview Entity Validation Blueprint
+    function isValidInterview(data) {
+      return data.id is string && data.id.size() >= 2 && data.id.size() <= 128
+        && data.userId is string && data.userId == request.auth.uid
+        && data.type is string && (data.type == 'Technical' || data.type == 'HR' || data.type == 'Behavioral')
+        && data.interviewerRole is string && data.interviewerRole.size() <= 200
+        && data.overallPerformanceScore is int && data.overallPerformanceScore >= 0 && data.overallPerformanceScore <= 100
+        && data.communicationScore is int && data.communicationScore >= 0 && data.communicationScore <= 100
+        && data.confidenceScore is int && data.confidenceScore >= 0 && data.confidenceScore <= 100
+        && data.createdAt is timestamp;
+    }
+
+    // 6. Human Intelligence Validation Blueprint
+    function isValidHumanIntel(data) {
+      return data.id is string && data.id.size() >= 2 && data.id.size() <= 128
+        && data.userId is string && data.userId == request.auth.uid
+        && data.role is string && data.role.size() <= 100
+        && data.confidenceScore is int && data.confidenceScore >= 0 && data.confidenceScore <= 100
+        && data.bodyLanguageScore is int && data.bodyLanguageScore >= 0 && data.bodyLanguageScore <= 100
+        && data.professionalPresenceScore is int && data.professionalPresenceScore >= 0 && data.professionalPresenceScore <= 100
+        && data.overallPlacementScore is int && data.overallPlacementScore >= 0 && data.overallPlacementScore <= 100
+        && data.createdAt is timestamp;
+    }
+
+    // Users Collection rules
+    match /users/{userId} {
+      // Allow individual profiles to be fetched by any logged-in user
+      allow get: if isSignedIn() && isValidId(userId);
+      
+      // Allow listing of users by authenticated members
+      allow list: if isSignedIn();
+
+      // Creation gates: exact validation, timestamp matching request.time
+      allow create: if isSignedIn() 
+        && userId == request.auth.uid 
+        && isValidUser(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+
+      // Update gates: role & createdAt immutability, only 'name' modification is permitted
+      allow update: if isSignedIn() 
+        && userId == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && isValidUser(request.resource.data)
+        && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name']) ||
+          request.resource.data.diff(resource.data).affectedKeys().size() == 0
+        );
+
+      // Explicitly block deletes client-side for safety
+      allow delete: if false;
+    }
+
+    // Reports Collection rules
+    match /reports/{reportId} {
+      // Allow single document read only if signed-in and owner of the document
+      allow get: if isSignedIn() 
+        && isValidId(reportId)
+        && resource.data.userId == request.auth.uid;
+
+      // Allow listing of reports owned by the active user
+      allow list: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      // Create gates for reporting
+      allow create: if isSignedIn()
+        && isValidId(reportId)
+        && request.resource.data.userId == request.auth.uid
+        && isValidReport(request.resource.data)
+        && request.resource.data.uploadedAt == request.time;
+
+      // Update rules (allow editing name/status if ever needed, or just block if immutable)
+      allow update: if isSignedIn()
+        && isValidId(reportId)
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.uploadedAt == resource.data.uploadedAt
+        && isValidReport(request.resource.data)
+        && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fileName']) ||
+          request.resource.data.diff(resource.data).affectedKeys().size() == 0
+        );
+
+      // Allow deleting own reports
+      allow delete: if isSignedIn()
+        && isValidId(reportId)
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Interview Reports Collection rules
+    match /interview_reports/{reportId} {
+      allow get: if isSignedIn()
+        && isValidId(reportId)
+        && resource.data.userId == request.auth.uid;
+
+      allow list: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(reportId)
+        && request.resource.data.userId == request.auth.uid
+        && isValidInterview(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if false; // Reports are secure and immutable once finalized
+
+      allow delete: if isSignedIn()
+        && isValidId(reportId)
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Human Intelligence Reports Collection rules
+    match /human_intel_reports/{reportId} {
+      allow get: if isSignedIn()
+        && isValidId(reportId)
+        && resource.data.userId == request.auth.uid;
+
+      allow list: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && isValidId(reportId)
+        && request.resource.data.userId == request.auth.uid
+        && isValidHumanIntel(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if false; // Hardened immutable reports
+
+      allow delete: if isSignedIn()
+        && isValidId(reportId)
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Phase 5 Collections matching users selection: resumes, interviews, humanAnalysis, careerTwins, placementScores, mentorshipBookings
+    match /resumes/{reportId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /interviews/{reportId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /humanAnalysis/{reportId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /careerTwins/{twinId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /placementScores/{scoreId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /mentorshipBookings/{bookingId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (request.resource.data.userId == request.auth.uid || resource.data.mentorId == request.auth.uid);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
